@@ -5,11 +5,11 @@ import {
   useGasPrice,
   useOnBlock,
   useUserProviderAndSigner,
-} from "eth-hooks";
-import { useExchangeEthPrice } from "eth-hooks/dapps/dex";
-import React, { Fragment, useCallback, useEffect, useState } from "react";
-import { Link, Route, Switch, useLocation } from "react-router-dom";
-import "./App.css";
+} from 'eth-hooks';
+import { useExchangeEthPrice } from 'eth-hooks/dapps/dex';
+import React, { Fragment, useCallback, useEffect, useState } from 'react';
+import { Link, Route, Switch, useLocation } from 'react-router-dom';
+import './App.css';
 import {
   Account,
   Contract,
@@ -21,15 +21,15 @@ import {
   NetworkDisplay,
   FaucetHint,
   NetworkSwitch,
-} from "./components";
-import { NETWORKS, ALCHEMY_KEY } from "./constants";
-import externalContracts from "./contracts/external_contracts";
+} from './components';
+import { NETWORKS, ALCHEMY_KEY } from './constants';
+import externalContracts from './contracts/external_contracts';
 // contracts
-import deployedContracts from "./contracts/hardhat_contracts.json";
-import { Transactor, Web3ModalSetup, classNames } from "./helpers";
-import { Home, ExampleUI, Hints, Subgraph } from "./views";
-import { useStaticJsonRPC } from "./hooks";
-
+import deployedContracts from './contracts/hardhat_contracts.json';
+import { Transactor, Web3ModalSetup, classNames } from './helpers';
+import { Home, ExampleUI, Hints, Subgraph } from './views';
+import { useStaticJsonRPC } from './hooks';
+import Profile from './views/profile/[id]';
 import { Dialog, Transition } from '@headlessui/react';
 import {
   HomeIcon,
@@ -41,8 +41,26 @@ import {
   CurrencyDollarIcon,
   ShareIcon,
 } from '@heroicons/react/outline';
+import { useEventListener } from 'eth-hooks/events/useEventListener';
 
-const { ethers } = require("ethers");
+import { ZDK, ZDKNetwork, ZDKChain } from '@zoralabs/zdk';
+
+const API_ENDPOINT = 'https://api.zora.co/graphql';
+
+const networkInfo = {
+  network: ZDKNetwork.Ethereum,
+  chain: ZDKChain.Mainnet,
+};
+
+const args = {
+  endPoint: API_ENDPOINT,
+  networks: [networkInfo],
+  /*apiKey: process.env.API_KEY*/
+};
+
+const zdk = new ZDK(args);
+
+const { ethers } = require('ethers');
 /*
     Welcome to 🏗 scaffold-eth !
 
@@ -75,15 +93,15 @@ const web3Modal = Web3ModalSetup();
 
 // 🛰 providers
 const providers = [
-  "https://eth-mainnet.gateway.pokt.network/v1/lb/611156b4a585a20035148406",
+  'https://eth-mainnet.gateway.pokt.network/v1/lb/611156b4a585a20035148406',
   `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_KEY}`,
-  "https://rpc.scaffoldeth.io:48544",
+  'https://rpc.scaffoldeth.io:48544',
 ];
 
 function App(props) {
   // specify all the chains your app is available on. Eg: ['localhost', 'mainnet', ...otherNetworks ]
   // reference './constants.js' for other networks
-  const networkOptions = [initialNetwork.name, "mainnet", "rinkeby"];
+  const networkOptions = [initialNetwork.name, 'mainnet', 'rinkeby'];
 
   const [injectedProvider, setInjectedProvider] = useState();
   const [address, setAddress] = useState();
@@ -104,11 +122,11 @@ function App(props) {
   if (DEBUG) console.log(`Using ${selectedNetwork} network`);
 
   // 🛰 providers
-  if (DEBUG) console.log("📡 Connecting to Mainnet Ethereum");
+  if (DEBUG) console.log('📡 Connecting to Mainnet Ethereum');
 
   const logoutOfWeb3Modal = async () => {
     await web3Modal.clearCachedProvider();
-    if (injectedProvider && injectedProvider.provider && typeof injectedProvider.provider.disconnect == "function") {
+    if (injectedProvider && injectedProvider.provider && typeof injectedProvider.provider.disconnect == 'function') {
       await injectedProvider.provider.disconnect();
     }
     setTimeout(() => {
@@ -120,7 +138,7 @@ function App(props) {
   const price = useExchangeEthPrice(targetNetwork, mainnetProvider);
 
   /* 🔥 This hook will get the price of Gas from ⛽️ EtherGasStation */
-  const gasPrice = useGasPrice(targetNetwork, "fast");
+  const gasPrice = useGasPrice(targetNetwork, 'fast');
   // Use your injected provider from 🦊 Metamask or if you don't have it then instantly generate a 🔥 burner wallet.
   const userProviderAndSigner = useUserProviderAndSigner(injectedProvider, localProvider, USE_BURNER_WALLET);
   const userSigner = userProviderAndSigner.signer;
@@ -172,13 +190,62 @@ function App(props) {
   });
 
   // Then read your DAI balance like:
-  const myMainnetDAIBalance = useContractReader(mainnetContracts, "DAI", "balanceOf", [
-    "0x34aA3F359A9D614239015126635CE7732c18fDF3",
+  const myMainnetDAIBalance = useContractReader(mainnetContracts, 'DAI', 'balanceOf', [
+    '0x34aA3F359A9D614239015126635CE7732c18fDF3',
   ]);
 
   // keep track of a variable from the contract in the local React state:
-  const purpose = useContractReader(readContracts, "YourContract", "purpose");
+  const purpose = useContractReader(readContracts, 'YourContract', 'purpose');
 
+  const asks = useEventListener(readContracts, 'ASKS', 'AskCreated', mainnetProvider, 14596934);
+
+  console.log('🐸  🔥  asks', asks);
+
+  const [askContent, setAskContent] = useState([]);
+
+  useEffect(
+    askContent => {
+      async function getAskContent() {
+        const newAskContent = [];
+        for (let a in asks) {
+          //@dev query zora to fetch token information if FF is not 0
+          //if (asks[a].args.ask.findersFeeBps > 0) {
+          console.log('found one with a finders fee!', asks[a].args.ask.findersFeeBps);
+          console.log('getting...', a, asks[a]);
+          console.log('ITEM', asks[a].args.tokenContract, asks[a].args.tokenId.toString());
+
+          const thisToken = {
+            address: asks[a].args.tokenContract,
+            tokenId: asks[a].args.tokenId.toString(),
+          };
+
+          console.log('thisToken', thisToken);
+
+          const args = {
+            token: thisToken,
+            includeFullDetails: false, // Optional, provides more data on the NFT such as all historical events
+          };
+
+          const response = await zdk.token(args);
+          console.log('📡 RESPONSE', response.token);
+
+          const fullObject = { ...response.token, ask: asks[a].args.ask };
+
+          newAskContent.push(fullObject);
+          console.log('📡 AskContent', askContent);
+          //} else {
+          // console.log("...");
+          //console.log("📡 AskContent", askContent);
+          //}
+        }
+        console.log('💾 saving content:', newAskContent);
+        setAskContent({ newAskContent });
+      }
+      getAskContent();
+    },
+    [asks],
+  );
+  console.log('📡 AskContent', askContent);
   /*
   const addressFromENS = useResolveName(mainnetProvider, "austingriffith.eth");
   console.log("🏷 Resolved austingriffith.eth as:",addressFromENS)
@@ -199,17 +266,17 @@ function App(props) {
       writeContracts &&
       mainnetContracts
     ) {
-      console.log("_____________________________________ 🏗 scaffold-eth _____________________________________");
-      console.log("🌎 mainnetProvider", mainnetProvider);
-      console.log("🏠 localChainId", localChainId);
-      console.log("👩‍💼 selected address:", address);
-      console.log("🕵🏻‍♂️ selectedChainId:", selectedChainId);
-      console.log("💵 yourLocalBalance", yourLocalBalance ? ethers.utils.formatEther(yourLocalBalance) : "...");
-      console.log("💵 yourMainnetBalance", yourMainnetBalance ? ethers.utils.formatEther(yourMainnetBalance) : "...");
-      console.log("📝 readContracts", readContracts);
-      console.log("🌍 DAI contract on mainnet:", mainnetContracts);
-      console.log("💵 yourMainnetDAIBalance", myMainnetDAIBalance);
-      console.log("🔐 writeContracts", writeContracts);
+      console.log('_____________________________________ 🏗 scaffold-eth _____________________________________');
+      console.log('🌎 mainnetProvider', mainnetProvider);
+      console.log('🏠 localChainId', localChainId);
+      console.log('👩‍💼 selected address:', address);
+      console.log('🕵🏻‍♂️ selectedChainId:', selectedChainId);
+      console.log('💵 yourLocalBalance', yourLocalBalance ? ethers.utils.formatEther(yourLocalBalance) : '...');
+      console.log('💵 yourMainnetBalance', yourMainnetBalance ? ethers.utils.formatEther(yourMainnetBalance) : '...');
+      console.log('📝 readContracts', readContracts);
+      console.log('🌍 DAI contract on mainnet:', mainnetContracts);
+      console.log('💵 yourMainnetDAIBalance', myMainnetDAIBalance);
+      console.log('🔐 writeContracts', writeContracts);
     }
   }, [
     mainnetProvider,
@@ -228,18 +295,18 @@ function App(props) {
     const provider = await web3Modal.connect();
     setInjectedProvider(new ethers.providers.Web3Provider(provider));
 
-    provider.on("chainChanged", chainId => {
+    provider.on('chainChanged', chainId => {
       console.log(`chain changed to ${chainId}! updating providers`);
       setInjectedProvider(new ethers.providers.Web3Provider(provider));
     });
 
-    provider.on("accountsChanged", () => {
+    provider.on('accountsChanged', () => {
       console.log(`account changed!`);
       setInjectedProvider(new ethers.providers.Web3Provider(provider));
     });
 
     // Subscribe to session disconnection
-    provider.on("disconnect", (code, reason) => {
+    provider.on('disconnect', (code, reason) => {
       console.log(code, reason);
       logoutOfWeb3Modal();
     });
@@ -252,7 +319,7 @@ function App(props) {
     }
   }, [loadWeb3Modal]);
 
-  const faucetAvailable = localProvider && localProvider.connection && targetNetwork.name.indexOf("local") !== -1;
+  const faucetAvailable = localProvider && localProvider.connection && targetNetwork.name.indexOf('local') !== -1;
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -316,24 +383,23 @@ function App(props) {
                 </div>
                 <div className="mt-5 flex-1 h-0 overflow-y-auto">
                   <nav className="px-2 space-y-1">
-                    {navigation.map((item) => {
+                    {navigation.map(item => {
                       const current = location.pathname === item.href;
                       return (
                         <Link
                           key={item.name}
                           to={item.href}
                           className={classNames(
-                            current ?
-                              'bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white'
-                            :
-                              'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white',
-                              'group flex items-center px-2 py-2 text-base font-medium rounded-md'
+                            current
+                              ? 'bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white'
+                              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white',
+                            'group flex items-center px-2 py-2 text-base font-medium rounded-md',
                           )}
                         >
                           <item.icon
                             className={classNames(
                               current ? 'text-gray-500' : 'text-gray-400 group-hover:text-gray-500',
-                              'mr-4 flex-shrink-0 h-6 w-6'
+                              'mr-4 flex-shrink-0 h-6 w-6',
                             )}
                             aria-hidden="true"
                           />
@@ -363,24 +429,23 @@ function App(props) {
             </div>
             <div className="mt-5 flex-grow flex flex-col">
               <nav className="flex-1 px-2 pb-4 space-y-1">
-                {navigation.map((item) => {
+                {navigation.map(item => {
                   const current = location.pathname === item.href;
                   return (
                     <Link
                       key={item.name}
                       to={item.href}
                       className={classNames(
-                        current ?
-                          'bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white'
-                        :
-                          'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white',
-                        'group flex items-center px-2 py-2 text-sm font-medium rounded-md'
+                        current
+                          ? 'bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white',
+                        'group flex items-center px-2 py-2 text-sm font-medium rounded-md',
                       )}
                     >
                       <item.icon
                         className={classNames(
                           current ? 'text-gray-500' : 'text-gray-400 group-hover:text-gray-500',
-                          'mr-3 flex-shrink-0 h-6 w-6'
+                          'mr-3 flex-shrink-0 h-6 w-6',
                         )}
                         aria-hidden="true"
                       />
@@ -435,7 +500,17 @@ function App(props) {
                 <Switch>
                   <Route exact path="/">
                     {/* pass in any web3 props to this Home component. For example, yourLocalBalance */}
-                    <Home yourLocalBalance={yourLocalBalance} readContracts={readContracts} />
+                    <Home
+                      yourLocalBalance={yourLocalBalance}
+                      readContracts={readContracts}
+                      asks={asks}
+                      setAskContent={setAskContent}
+                      askContent={askContent}
+                      writeContracts={writeContracts}
+                      tx={tx}
+                      price={price}
+                      zdk={zdk}
+                    />
                   </Route>
                   <Route exact path="/debug">
                     {/*
@@ -454,6 +529,7 @@ function App(props) {
                       contractConfig={contractConfig}
                     />
                   </Route>
+                  <Route path="/profile/:id" component={Profile} userSigner={userSigner} />
                   <Route path="/hints">
                     <Hints
                       address={address}
@@ -516,21 +592,19 @@ function App(props) {
           <div className="mb-1 space-x-2">
             <Ramp price={price} address={address} networks={NETWORKS} />
             <GasGauge gasPrice={gasPrice} />
-            <a href='https://t.me/joinchat/KByvmRe5wkR-8F_zz6AjpA' className="inline-flex items-center px-3 py-0.5 rounded-full text-base font-normal bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-white">
+            <a
+              href="https://t.me/joinchat/KByvmRe5wkR-8F_zz6AjpA"
+              className="inline-flex items-center px-3 py-0.5 rounded-full text-base font-normal bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-white"
+            >
               💬 Support
             </a>
           </div>
           {/* if the local provider has a signer, let's show the faucet: */}
-          {faucetAvailable && (
-            <Faucet localProvider={localProvider} price={price} ensProvider={mainnetProvider} />
-          )}
+          {faucetAvailable && <Faucet localProvider={localProvider} price={price} ensProvider={mainnetProvider} />}
         </div>
       </div>
       {/* Global notification live region, render this permanently at the end of the document */}
-      <div
-        aria-live="assertive"
-        className="fixed inset-0 flex items-start px-4 pt-20 pb-6 pointer-events-none"
-      >
+      <div aria-live="assertive" className="fixed inset-0 flex items-start px-4 pt-20 pb-6 pointer-events-none">
         <div className="w-full flex flex-col items-end space-y-4">
           {/* Alert if wrong network is selected */}
           <NetworkDisplay
@@ -539,8 +613,8 @@ function App(props) {
             selectedChainId={selectedChainId}
             targetNetwork={targetNetwork}
           />
-          
-          {yourLocalBalance.lte(ethers.BigNumber.from("0")) && (
+
+          {yourLocalBalance.lte(ethers.BigNumber.from('0')) && (
             <FaucetHint localProvider={localProvider} targetNetwork={targetNetwork} address={address} />
           )}
         </div>
