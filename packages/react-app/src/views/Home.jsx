@@ -45,7 +45,7 @@ function Home({ zdk, address, yourLocalBalance, readContracts, askContent, Balan
     <div>
       <List
         bordered
-        dataSource={ askContent.newAskContent.length > 0 ? askContent.newAskContent : [] }
+        dataSource={askContent}
         renderItem={item => (
           <List.Item>
             <NFTPreview contract={item.token.collectionAddress} id={item.token.tokenId} />
