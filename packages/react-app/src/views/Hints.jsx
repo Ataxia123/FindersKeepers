@@ -1,8 +1,10 @@
-import { Button } from 'antd';
+import { Button, Grid } from 'antd';
 import { React, useState } from 'react';
 import { ZDK } from '@zoralabs/zdk';
+import {NFTPreview} from '@zoralabs/nft-components';
+import { Link } from 'react-router-dom';
 
-export default function Hints() {
+export default function Hints(NFTPreview) {
   /* @DEV: Use this page to display listings for a specific collection 
   
   
@@ -12,6 +14,7 @@ export default function Hints() {
   const zdk = new ZDK(API_ENDPOINT);
 
   const [Collection, setCollection] = useState();
+  const [Listings, setListings] = useState('...');
 
   const args = {
     where: {
@@ -22,7 +25,9 @@ export default function Hints() {
   function getCollection() {
     zdk.markets(args).then(res => {
       console.log(res);
+      setListings(res);
     });
+    console.log('listings', Listings);
   }
   return (
     <div>
@@ -43,7 +48,27 @@ export default function Hints() {
       </div>
       <Button type="primary" onClick={getCollection}>
         Submit
+        {console.log('listings', Listings)}
       </Button>
+      <div>
+        {Listings.nodes?.map((item, index) => (
+          <Grid>
+            <NFTPreview contract={item.token?.collectionAddresses} id={item.token?.tokenId} />
+            <div
+              style={{
+                backgroundColor: 'rgb(97, 255, 150)',
+                display: 'inline-block',
+                border: '1px solid black',
+                borderRadius: '10px',
+                padding: '42px',
+                margin: '1.5%',
+                overflow: 'hidden',
+                textAlign: 'top center',
+              }}
+            ></div>
+          </Grid>
+        ))}
+      </div>
     </div>
   );
 }

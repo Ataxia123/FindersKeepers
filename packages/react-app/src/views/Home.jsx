@@ -67,7 +67,6 @@ function Home({ zdk, address, yourLocalBalance, readContracts, askContent, Balan
                 <div>
                   <b>{item && item.token && item.token.name}</b>
                 </div>
-                <Balance value={item.ask.askPrice} price={price} size={20} />
                 {extraRender}
                 <Button
                   onClick={async () => {
