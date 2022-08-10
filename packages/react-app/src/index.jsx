@@ -1,15 +1,61 @@
-import { ApolloClient, ApolloProvider, InMemoryCache, ApolloLink, HttpLink } from '@apollo/client';
+import { ApolloClient, ApolloLink, ApolloProvider, InMemoryCache, HttpLink } from '@apollo/client';
 import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
 import ReactDOM from 'react-dom';
+import { BrowserRouter } from 'react-router-dom';
+import { chain, configureChains, createClient, WagmiConfig } from 'wagmi';
+import { alchemyProvider } from 'wagmi/providers/alchemy';
+import { infuraProvider } from 'wagmi/providers/infura';
+import { publicProvider } from 'wagmi/providers/public';
 import App from './App';
 import './index.css';
 
-const subgraphUri = 'http://localhost:8000/subgraphs/name/scaffold-eth/your-contract';
+import { CoinbaseWalletConnector } from 'wagmi/connectors/coinbaseWallet';
+import { InjectedConnector } from 'wagmi/connectors/injected';
+import { MetaMaskConnector } from 'wagmi/connectors/metaMask';
+import { WalletConnectConnector } from 'wagmi/connectors/walletConnect';
 
 const httpLink = new HttpLink({ uri: 'https://api.lens.dev/' });
 
-// example how you can pass in the x-access-token into requests using `ApolloLink`
+const alchemyId = process.env.ALCHEMY_ID;
+const infuraId = process.env.INFURA_ID;
+
+const { chains, provider, webSocketProvider } = configureChains(
+  [chain.mainnet, chain.polygon],
+  [
+    alchemyProvider({ apiKey: alchemyId, priority: 1 }),
+    infuraProvider({ apiKey: infuraId, priority: 2 }),
+    publicProvider({ priority: 0 }),
+  ],
+);
+
+const client = createClient({
+  autoConnect: false,
+  connectors: [
+    new MetaMaskConnector({ chains }),
+    new CoinbaseWalletConnector({
+      chains,
+      options: {
+        appName: 'scaffold-eth',
+      },
+    }),
+    new WalletConnectConnector({
+      chains,
+      options: {
+        qrcode: true,
+      },
+    }),
+    new InjectedConnector({
+      chains,
+      options: {
+        name: 'Injected',
+        shimDisconnect: true,
+      },
+    }),
+  ],
+  provider,
+  webSocketProvider,
+});
+
 const authLink = new ApolloLink((operation, forward) => {
   // Retrieve the authorization token from local storage.
   // if your using node etc you have to handle your auth different
@@ -26,15 +72,17 @@ const authLink = new ApolloLink((operation, forward) => {
   return forward(operation);
 });
 
-const client = new ApolloClient({
+const apolloClient = new ApolloClient({
   link: authLink.concat(httpLink),
   cache: new InMemoryCache(),
 });
 ReactDOM.render(
-  <ApolloProvider client={client}>
-    <BrowserRouter>
-      <App subgraphUri={subgraphUri} />
-    </BrowserRouter>
-  </ApolloProvider>,
+  <WagmiConfig client={client}>
+    <ApolloProvider client={apolloClient}>
+      <BrowserRouter>
+        <App subgraphUri={authLink.concat(httpLink)} />
+      </BrowserRouter>
+    </ApolloProvider>
+  </WagmiConfig>,
   document.getElementById('root'),
 );

@@ -45,6 +45,18 @@ import { useEventListener } from 'eth-hooks/events/useEventListener';
 
 import { ZDK, ZDKNetwork, ZDKChain } from '@zoralabs/zdk';
 
+//WAGMI IMPORTS
+import { WagmiConfig, createClient, defaultChains, configureChains } from 'wagmi';
+
+import { alchemyProvider } from 'wagmi/providers/alchemy';
+import { publicProvider } from 'wagmi/providers/public';
+
+import { CoinbaseWalletConnector } from 'wagmi/connectors/coinbaseWallet';
+import { InjectedConnector } from 'wagmi/connectors/injected';
+import { MetaMaskConnector } from 'wagmi/connectors/metaMask';
+import { WalletConnectConnector } from 'wagmi/connectors/walletConnect';
+//
+
 const API_ENDPOINT = 'https://api.zora.co/graphql';
 
 const networkInfo = {
@@ -197,59 +209,47 @@ function App(props) {
   // keep track of a variable from the contract in the local React state:
   const purpose = useContractReader(readContracts, 'YourContract', 'purpose');
 
-  const asks = useEventListener(readContracts, 'ASKS', 'AskCreated', mainnetProvider, 15005183);
+  const asks = useEventListener(readContracts, 'ASKS', 'AskCreated', mainnetProvider, 15311212);
 
   console.log('🐸  🔥  asks', asks);
 
-  const [askContent, setAskContent] = useState([]);
+  const [askContent, setAskContent] = useState();
 
-  useEffect(
-    askContent => {
-      async function getAskContent() {
-        const newAskContent = [];
-        for (let a in asks) {
-          //@dev query zora to fetch token information if FF is not 0
-          //if (asks[a].args.ask.findersFeeBps > 0) {
-          console.log('found one with a finders fee!', asks[a].args.ask.findersFeeBps);
-          console.log('getting...', a, asks[a]);
-          console.log('ITEM', asks[a].args.tokenContract, asks[a].args.tokenId.toString());
+  useEffect(async () => {
+    const newAskContent = [];
+    for (let a in asks) {
+      //@dev query zora to fetch token information if FF is not 0
+      //if (asks[a].args.ask.findersFeeBps > 0) {
+      console.log('found one with a finders fee!', asks[a].args.ask.findersFeeBps);
+      console.log('getting...', a, asks[a]);
+      console.log('ITEM', asks[a].args.tokenContract, asks[a].args.tokenId.toString());
 
-          const thisToken = {
-            address: asks[a].args.tokenContract,
-            tokenId: asks[a].args.tokenId.toString(),
-          };
+      const thisToken = {
+        address: asks[a].args.tokenContract,
+        tokenId: asks[a].args.tokenId.toString(),
+      };
 
-          console.log('thisToken', thisToken);
+      console.log('thisToken', thisToken);
 
-          const args = {
-            token: thisToken,
-            includeFullDetails: false, // Optional, provides more data on the NFT such as all historical events
-          };
+      const args = {
+        token: thisToken,
+        includeFullDetails: false, // Optional, provides more data on the NFT such as all historical events
+      };
 
-          const response = await zdk.token(args);
-          console.log('📡 RESPONSE', response.token);
+      const response = await zdk.token(args);
+      console.log('📡 RESPONSE', response.token);
 
-          const fullObject = { ...response.token, ask: asks[a].args.ask };
+      const fullObject = { ...response.token, ask: asks[a].args.ask };
 
-          newAskContent.push(fullObject);
-          console.log('📡 AskContent', askContent);
-          //} else {
-          // console.log("...");
-          //console.log("📡 AskContent", askContent);
-          //}
-        }
-        console.log('💾 saving content:', newAskContent);
-        setAskContent( newAskContent );
-      }
-      getAskContent();
-    },
-    [asks],
-  );
-  console.log('📡 AskContent', askContent);
-  /*
-  const addressFromENS = useResolveName(mainnetProvider, "austingriffith.eth");
-  console.log("🏷 Resolved austingriffith.eth as:",addressFromENS)
-  */
+      newAskContent.push(fullObject);
+      //} else {
+      // console.log("...");
+      //console.log("📡 AskContent", askContent);
+      //}
+    }
+    console.log('💾 saving content:', newAskContent);
+    setAskContent(newAskContent);
+  }, [asks]);
 
   //
   // 🧫 DEBUG 👨🏻‍🔬
@@ -295,18 +295,18 @@ function App(props) {
     const provider = await web3Modal.connect();
     setInjectedProvider(new ethers.providers.Web3Provider(provider));
 
-    provider.on('chainChanged', chainId => {
+    provider.on("chainChanged", chainId => {
       console.log(`chain changed to ${chainId}! updating providers`);
       setInjectedProvider(new ethers.providers.Web3Provider(provider));
     });
 
-    provider.on('accountsChanged', () => {
+    provider.on("accountsChanged", () => {
       console.log(`account changed!`);
       setInjectedProvider(new ethers.providers.Web3Provider(provider));
     });
 
     // Subscribe to session disconnection
-    provider.on('disconnect', (code, reason) => {
+    provider.on("disconnect", (code, reason) => {
       console.log(code, reason);
       logoutOfWeb3Modal();
     });
@@ -500,6 +500,7 @@ function App(props) {
                 <Switch>
                   <Route exact path="/">
                     {/* pass in any web3 props to this Home component. For example, yourLocalBalance */}
+
                     <Home
                       yourLocalBalance={yourLocalBalance}
                       readContracts={readContracts}
@@ -529,7 +530,9 @@ function App(props) {
                       contractConfig={contractConfig}
                     />
                   </Route>
+
                   <Route path="/profile/:id" component={Profile} userSigner={userSigner} />
+
                   <Route path="/hints">
                     <Hints
                       address={address}
@@ -538,6 +541,7 @@ function App(props) {
                       price={price}
                     />
                   </Route>
+
                   <Route path="/exampleui">
                     <ExampleUI
                       address={address}
