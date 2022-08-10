@@ -42,18 +42,100 @@ function Home({ zdk, address, yourLocalBalance, readContracts, askContent, Balan
     console.log('stats', getStats);
   };
   return (
-    <div>
-      <List
-        bordered
-        dataSource={askContent}
-        renderItem={item => (
+    <List
+      bordered
+      dataSource={askContent}
+      renderItem={item => {
+        console.log('IIIIITTTTEEEMMM', item); ////
+
+        let extraRender = '';
+        if (item && item.token.image && item.token.image.url) {
+          extraRender = <img src={item.token.image.url} />;
+        }
+
+        const url =
+          'https://embed.zora.co/' +
+          item.token.collectionAddress +
+          '/' +
+          item.token.tokenId +
+          '?title=false&controls=false&loop=false&autoplay=false';
+
+        return (
           <List.Item>
-            <NFTPreview contract={item.token.collectionAddress} id={item.token.tokenId} />
-            <List.Item.Meta title={item.collectionAddress} description={item.token.content} />
+            <div>
+              <div style={{ float: 'right' }}>
+                <div>
+                  <b>{item && item.token && item.token.name}</b>
+                </div>
+                <Balance value={item.ask.askPrice} price={price} size={20} />
+                {extraRender}
+                <Button
+                  onClick={async () => {
+                    let result = tx(
+                      writeContracts['ASKS'].fillAsk(
+                        item.token.collectionAddress,
+                        item.token.tokenId,
+                        item.ask.askCurrency,
+                        item.ask.askPrice,
+                        readContracts['YourContract'].address, //finder fee will go here
+                        { value: item.ask.askPrice },
+                      ),
+                    );
+                    console.log('result', result);
+                    console.log('wait', await result);
+                  }}
+                  size="large"
+                  shape="round"
+                >
+                  <span style={{ marginRight: 8 }} role="img" aria-label="support">
+                    💵
+                  </span>
+                  FILL ASK
+                </Button>
+              </div>
+            </div>
+            <div style={{ width: '320px', height: '320px', margin: '0 auto', position: 'relative' }}>
+              <iframe
+                title="thing"
+                src={url}
+                width="100%"
+                height="100%"
+                scrolling="no"
+                allowtransparency="true"
+                sandbox="allow-pointer-lock allow-same-origin allow-scripts allow-popups"
+              ></iframe>
+            </div>
+            <div>
+              <Button
+                onClick={() => {
+                  tx(writeContracts.YourContract.curate(item.token.collectionAddress, item.token.tokenId, true));
+                }}
+                size="large"
+                shape="round"
+              >
+                <span style={{ marginRight: 8 }} role="img" aria-label="support">
+                  👍
+                </span>
+                bussin
+              </Button>
+
+              <Button
+                onClick={() => {
+                  tx(writeContracts.YourContract.curate(item.token.collectionAddress, item.token.tokenId, false));
+                }}
+                size="large"
+                shape="round"
+              >
+                <span style={{ marginRight: 8 }} role="img" aria-label="support">
+                  👎
+                </span>
+                mid
+              </Button>
+            </div>
           </List.Item>
-        )}
-      />
-    </div>
+        );
+      }}
+    />
   );
 }
 export default Home;
