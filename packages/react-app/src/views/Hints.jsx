@@ -1,8 +1,9 @@
-import { Button, Grid } from 'antd';
+import { Button } from 'antd';
 import { React, useState } from 'react';
 import { ZDK } from '@zoralabs/zdk';
-import {NFTPreview} from '@zoralabs/nft-components';
+import NFTPreview from '@zoralabs/nft-components';
 import { Link } from 'react-router-dom';
+import Grid from 'antd/lib/card/Grid.js';
 
 export default function Hints(NFTPreview) {
   /* @DEV: Use this page to display listings for a specific collection 
@@ -25,9 +26,9 @@ export default function Hints(NFTPreview) {
   function getCollection() {
     zdk.markets(args).then(res => {
       console.log(res);
-      setListings(res);
+      setListings([res.markets]);
+      console.log('listings', Listings);
     });
-    console.log('listings', Listings);
   }
   return (
     <div>
@@ -47,27 +48,35 @@ export default function Hints(NFTPreview) {
         />
       </div>
       <Button type="primary" onClick={getCollection}>
-        Submit
-        {console.log('listings', Listings)}
+        Submit <div></div>
       </Button>
       <div>
-        {Listings.nodes?.map((item, index) => (
-          <Grid>
-            <NFTPreview contract={item.token?.collectionAddresses} id={item.token?.tokenId} />
-            <div
-              style={{
-                backgroundColor: 'rgb(97, 255, 150)',
-                display: 'inline-block',
-                border: '1px solid black',
-                borderRadius: '10px',
-                padding: '42px',
-                margin: '1.5%',
-                overflow: 'hidden',
-                textAlign: 'top center',
-              }}
-            ></div>
-          </Grid>
-        ))}
+        {Listings[0].nodes
+      ? Listings && Listings[0].nodes.map((nodes, index) => (
+              <Grid>
+                <Link key={index} to={`/listing/${nodes.token.tokenId}`}>
+                  <a href={`/listing/${nodes.token.tokenId}`}>
+                    <div
+                      style={{
+                        backgroundColor: 'rgb(97, 255, 150)',
+                        display: 'inline-block',
+                        border: '1px solid black',
+                        borderRadius: '10px',
+                        padding: '42px',
+                        margin: '1.5%',
+                        overflow: 'hidden',
+                        textAlign: 'top center',
+                      }}
+                    >
+                      <p>Classifieds</p>
+                      {nodes.token.collectionAddress}
+                    </div>
+                    <img src={nodes.token.image.url} alt="..." />
+                  </a>
+                </Link>
+              </Grid>
+            ))
+          : '...'}
       </div>
     </div>
   );
