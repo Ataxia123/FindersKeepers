@@ -1,16 +1,16 @@
 # Finders Keepers 
-![](https://i.imgur.com/7gTbXRd.jpg)
+<img src="https://i.imgur.com/7gTbXRd.jpg" alt="drawing" width="200"/>
+
 -> What does Finders Keepers do?
 
  Aggregate Zora finder's fee's by creating a platform to discover NFTs. Listings at Finder's Keepers marketplace create Lens posts that spread the word about the art being listed by being shared by the DAO. The dao is incentivized to generate a sale and keep the finder's fee to fund operations + growth.
 
-![](https://i.imgur.com/APJVSaw.png)
+
 
 ## Project Status:
 
-Help us by joining our development team here: 
-
-
+Help us by joining our development team here: https://t.me/+fSYykp9GzfoxNzcx
+<img src="https://i.imgur.com/APJVSaw.png" alt="drawing" width="200"/>
 ## Tx Flow:
 Step 1 ==> Create Lens post (gets address + TokenID[Are all lens posts on the same addr?])
 
