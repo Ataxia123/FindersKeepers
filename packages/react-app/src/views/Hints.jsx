@@ -1,11 +1,11 @@
 import { Button } from 'antd';
 import { React, useState } from 'react';
 import { ZDK } from '@zoralabs/zdk';
-import NFTPreview from '@zoralabs/nft-components';
+import { NFTPreview } from '@zoralabs/nft-components';
 import { Link } from 'react-router-dom';
 import Grid from 'antd/lib/card/Grid.js';
 
-export default function Hints(NFTPreview) {
+export default function Hints() {
   /* @DEV: Use this page to display listings for a specific collection 
   
   
@@ -52,10 +52,10 @@ export default function Hints(NFTPreview) {
       </Button>
       <div>
         {Listings[0].nodes
-      ? Listings && Listings[0].nodes.map((nodes, index) => (
+          ? Listings[0].nodes.map((nodes, index) => (
               <Grid>
-                <Link key={index} to={`/listing/${nodes.token.tokenId}`}>
-                  <a href={`/listing/${nodes.token.tokenId}`}>
+                <Link key={index} to={`/listing/${nodes.token.collectionAddress}/${nodes.token.tokenId}`}>
+                  <a href={`/listing/${nodes.token.collectionAddress}/${nodes.token.tokenId}`}>
                     <div
                       style={{
                         backgroundColor: 'rgb(97, 255, 150)',
@@ -69,9 +69,11 @@ export default function Hints(NFTPreview) {
                       }}
                     >
                       <p>Classifieds</p>
-                      {nodes.token.collectionAddress}
+                      Contract: {nodes.token?.collectionAddress}
+                      <div> Id: {nodes.token?.tokenId}</div>
                     </div>
-                    <img src={nodes.token.image.url} alt="..." />
+                    <NFTPreview contract={nodes.token.collectionAddress} id={nodes.token.tokenId}>
+                      </NFTPreview>
                   </a>
                 </Link>
               </Grid>
