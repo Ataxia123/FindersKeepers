@@ -10,8 +10,12 @@
 ## Project Status:
 
 Help us by joining our development team here: https://t.me/+fSYykp9GzfoxNzcx
-<img src="https://i.imgur.com/APJVSaw.png" alt="drawing" width="200"/>
 ## Tx Flow:
+
+<img src="https://i.imgur.com/APJVSaw.png" alt="drawing" width="750"/>
+<div>
+
+
 Step 1 ==> Create Lens post (gets address + TokenID[Are all lens posts on the same addr?])
 
 Step 2====>List an NFT using Zora + make Lens post finder's fee recipient
@@ -39,7 +43,7 @@ await askModuleContract.fillAsk(
 -> Display Listed NFTs
 
 -> Display listed listings (?)
-
+</div>
 
 
 ## Step 3 ===> Claim finder's fee from FK SC
