@@ -6,7 +6,6 @@
  Aggregate Zora finder's fee's by creating a platform to discover NFTs. Listings at Finder's Keepers marketplace create Lens posts that spread the word about the art being listed by being shared by the DAO. The dao is incentivized to generate a sale and keep the finder's fee to fund operations + growth.
 
 
-
 ## Project Status:
 
 Help us by joining our development team here: https://t.me/+fSYykp9GzfoxNzcx
@@ -16,37 +15,14 @@ Help us by joining our development team here: https://t.me/+fSYykp9GzfoxNzcx
 <div>
 
 
-Step 1 ==> Create Lens post (gets address + TokenID[Are all lens posts on the same addr?])
-
-Step 2====>List an NFT using Zora + make Lens post finder's fee recipient
-
-const blitmapAddress = "0x8d04a8c79cEB0889Bdd12acdF3Fa9D207eD3Ff63"; // Blitmap NFT Contract
-const fillAmount = 
-
-ethers.utils.parseEther("[TODO: INPUT FIELD]"); // [TODO: INPUT FIELD]
-const finder = [OUTPUT OF LENS POST]; // Address of the Lens FInder's Post
 
 
-await askModuleContract.fillAsk(
+## Step 1 ====>List an NFT using Zora + make Lens post finder's fee recipient
+## Step 2  ==> Create Lens post (gets address + TokenID
 
- blitmapAddress,
+## Step 3  Display Listed NFTs
 
- "1", // Token Id
-
- "0x0000000000000000000000000000000000000000", // 0 address for ETH sale
-
- fillAmount,
-
- finder <- Replace with the owner of LensPost
-);
-
--> Display Listed NFTs
-
--> Display listed listings (?)
-</div>
-
-
-## Step 3 ===> Claim finder's fee from FK SC
+## Step 4 Claim finder's fee from FK SC
 
 
 

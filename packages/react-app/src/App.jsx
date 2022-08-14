@@ -554,6 +554,10 @@ function App(props) {
                       writeContracts={writeContracts}
                       readContracts={readContracts}
                       purpose={purpose}
+                      asks={asks}
+                      setAskContent={setAskContent}
+                      askContent={askContent}
+                      zdk={zdk}
                     />
                   </Route>
                   <Route path="/mainnetdai">

@@ -99,8 +99,7 @@ export default function ExampleUI() {
                     {/* <p style={{ inlineSize: '150px', overflowWrap: 'break-word', }}>{profile.bio}</p>
                      */}
                     <br></br>
-                    <button style={{ display: 'inline-block', margin: '10px' }}>Buy</button>
-                    <button>Sell</button>
+                    z
                   </h4>
                 </div>
               </a>
